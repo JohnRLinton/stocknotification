@@ -17,7 +17,7 @@ import java.util.HashMap;
  * @email 772767100@qq.com
  */
 @Configuration
-public class MyRocketMQConfig {
+public class MyRabbitMQConfig {
 
     /* 容器中的Queue、Exchange、Binding 会自动创建（在RabbitMQ）不存在的情况下 */
 
