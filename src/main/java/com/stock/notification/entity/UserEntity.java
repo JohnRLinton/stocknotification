@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 
 @Data
 @TableName("userinfo")
-public class user implements Serializable {
+public class UserEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**

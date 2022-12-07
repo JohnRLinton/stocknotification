@@ -19,7 +19,7 @@ import java.math.BigDecimal;
 
 @Data
 @TableName("stocktrading")
-public class stocktradiing implements Serializable {
+public class StocktradiingEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**

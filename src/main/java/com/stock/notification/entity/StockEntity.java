@@ -20,7 +20,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 @Data
 @TableName("stockinfo")
-public class stock implements Serializable {
+public class StockEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
