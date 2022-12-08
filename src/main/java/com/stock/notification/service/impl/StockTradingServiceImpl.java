@@ -79,7 +79,7 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
         // 2 封装数据
         Map<String, List<StocktradingEntity>> stockTradingMap = level1stock.stream().collect(Collectors.toMap(k -> k.getStockCode().toString(), v -> {
                     // 1 每一个的一级分类，查到这个一级分类的二级分类
-                    return level1stock;
+                    return selectList;
                 }
 
         ));
