@@ -9,6 +9,7 @@ import com.stock.notification.service.StockTradingService;
 import com.stock.notification.vo.StockVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,13 +20,13 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Service("stockService")
 public class StockServiceImpl extends ServiceImpl<StockDao, StockEntity> implements StockService {
 
-//    @Autowired
-//    private StockTradingService stockTradingService;
+
 
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
 
     @Override
+    @Cacheable(value = "stockCache",key = "#stock")
     public List<StockEntity> queryStock() {
         StockVo stockVo = new StockVo();
         List<StockEntity> list= this.baseMapper.selectList(new QueryWrapper<StockEntity>());

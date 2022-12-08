@@ -32,7 +32,7 @@ public class StockEntity implements Serializable {
      * 股票代码
      */
     @TableId
-    private String stockcCode;
+    private String stockCode;
 
     /**
      * 地区代码

@@ -1,6 +1,5 @@
 package com.stock.notification.config;
 
-import com.alibaba.fastjson.serializer.GuavaCodec;
 import com.google.common.cache.*;
 import com.stock.notification.entity.StockEntity;
 import com.stock.notification.service.StockService;

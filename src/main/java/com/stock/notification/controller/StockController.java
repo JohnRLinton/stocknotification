@@ -1,12 +1,14 @@
 package com.stock.notification.controller;
 
 
-import com.baomidou.mybatisplus.extension.api.R;
+//import com.baomidou.mybatisplus.extension.api.R;
 import com.stock.notification.entity.StockEntity;
 import com.stock.notification.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import com.stock.notification.utils.R;
 
 import java.util.List;
 
@@ -17,6 +19,7 @@ import java.util.List;
  * @email 772767100@qq.com
  * @date 2022-12-7 16:50
  */
+
 @RestController
 @RequestMapping("stock/userSelect")
 
@@ -33,6 +36,7 @@ public class StockController {
 
         List<StockEntity> stockEntities = stockService.queryStock();
 
+//        return R.ok().put("stockdata", stockEntities);
         return R.ok().put("stockdata", stockEntities);
     }
 }

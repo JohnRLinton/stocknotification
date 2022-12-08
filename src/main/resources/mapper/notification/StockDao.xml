@@ -5,17 +5,15 @@
 
     <!-- 可根据自己的需求，是否要使用 -->
     <resultMap type="com.stock.notification.entity.StockEntity" id="stockMap">
-        <result property="stockname" column="stockname"/>
-        <result property="stockcode" column="stockcode"/>
-        <result property="areacode" column="areacode"/>
-        <result property="stocktype" column="stocktype"/>
+        <result property="stockName" column="stockname"/>
+        <result property="stockCode" column="stockcode"/>
+        <result property="areaCode" column="areacode"/>
+        <result property="stockType" column="stocktype"/>
         <result property="contribution" column="contribution"/>
-        <result property="totalvalue" column="totalvalue"/>
-        <result property="totalissue" column="totalissue"/>
+        <result property="totalValue" column="totalvalue"/>
+        <result property="totalIssue" column="totalissue"/>
     </resultMap>
 
-    <select id="findAllStock">
 
-    </select>
 
 </mapper>
