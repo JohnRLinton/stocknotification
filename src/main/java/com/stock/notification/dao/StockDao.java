@@ -9,6 +9,6 @@ import java.util.List;
 
 @Repository
 public interface StockDao extends BaseMapper<StockEntity> {
-    List<StockEntity> findAllStock();
+//    List<StockEntity> findAllStock();
 
 }

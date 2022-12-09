@@ -50,7 +50,8 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
             //从数据库中访问数据
             dataFromDB = getDataFromDB();
 
-        } finally {
+        }
+        finally {
             lock.unlock();
         }
         return dataFromDB;
@@ -63,7 +64,7 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
      */
     private Map<String, List<StocktradingEntity>> getDataFromDB() {
         String stockTradingJSON = redisTemplate.opsForValue().get("stockTradingJSON");
-        if (!StringUtils.isEmpty(stockTradingJSON)) {
+        if (!StringUtils.hasLength(stockTradingJSON)) {
             // 缓存不为null直接返回
             Map<String, List<StocktradingEntity>> result = JSON.parseObject(stockTradingJSON, new TypeReference<Map<String, List<StocktradingEntity>>>() {
             });
@@ -73,13 +74,13 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
 
         List<StocktradingEntity> selectList =baseMapper.selectList(null);
         log.info(String.valueOf(selectList));
-        // 查询所有股票代码
+        // 查询股票代码额外信息
         List<StocktradingEntity> level1stock = getStock_code(selectList, null);
 
         // 2 封装数据
         Map<String, List<StocktradingEntity>> stockTradingMap = level1stock.stream().collect(Collectors.toMap(k -> k.getStockCode().toString(), v -> {
                     // 1 每一个的一级分类，查到这个一级分类的二级分类
-                    return selectList;
+                    return level1stock;
                 }
 
         ));
@@ -90,6 +91,12 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
         return stockTradingMap;
     }
 
+    /**
+     * 获取股票代码，并存为list
+     * @param selectList
+     * @param stock_code
+     * @return
+     */
     private List<StocktradingEntity> getStock_code(List<StocktradingEntity> selectList, String stock_code) {
         List<StocktradingEntity> collect = selectList.stream().filter(item -> {
             return item.getStockCode() == stock_code;
@@ -97,4 +104,6 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
         return collect;
         // return baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("stock_code", v.getCatId()));
     }
+
+
 }
