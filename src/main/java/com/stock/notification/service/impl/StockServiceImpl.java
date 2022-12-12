@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
@@ -32,15 +34,32 @@ public class StockServiceImpl extends ServiceImpl<StockDao, StockEntity> impleme
     @Autowired
     private UserStockRelationService userStockRelationService;
 
+
     @Override
     @Cacheable(value = "stockCache",key = "#stock")
     public Map<String,List<StockEntity>> queryStock(int userId) {
         //推荐股
         Map<String,List<StockEntity>> map=null;
-        List<StockEntity> recommendList= this.baseMapper.selectList(new QueryWrapper<StockEntity>());
-        map.put("推荐股票",recommendList);
-        List<StockEntity> selectList = userStockRelationService.querySelectStock(userId);
-        map.put("用户所持股票",selectList);
+
+        //1、获取推荐股票 stockinfo
+        CompletableFuture<Void> recommendFuture = CompletableFuture.runAsync(() -> {
+            List<StockEntity> recommendList= this.baseMapper.selectList(new QueryWrapper<StockEntity>());
+            map.put("推荐股票",recommendList);
+        }, executor);
+
+        //2、获取自选股票 userown
+        CompletableFuture<Void> selectFuture = CompletableFuture.runAsync(() -> {
+            List<StockEntity> selectList = userStockRelationService.querySelectStock(userId);
+            map.put("用户所持股票",selectList);
+        }, executor);
+
+        try {
+            CompletableFuture.allOf(recommendFuture,selectFuture).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
         return map;
     }
 

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.stock.notification.dao.UserAlertDao">
+
+    <!-- 可根据自己的需求，是否要使用 -->
+    <resultMap type="com.stock.notification.entity.UserAlertEntity" id="userAlertMap">
+        <result property="userId" column="userid"/>
+        <result property="stockCode" column="stockcode"/>
+        <result property="alertType" column="alert_type"/>
+        <result property="alertContent" column="alert_content"/>
+        <result property="alertFrequency" column="alert_frequncy"/>
+    </resultMap>
+
+
+
+</mapper>

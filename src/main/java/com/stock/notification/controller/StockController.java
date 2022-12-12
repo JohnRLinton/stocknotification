@@ -6,6 +6,7 @@ import com.stock.notification.entity.StockEntity;
 import com.stock.notification.entity.UserEntity;
 import com.stock.notification.service.StockService;
 import com.stock.notification.service.StockTradingService;
+import com.stock.notification.service.UserAlertService;
 import com.stock.notification.service.UserStockRelationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 商品三级分类
+ * 股票自选模块
  *
  * @author luoyang
  * @email 772767100@qq.com
@@ -36,6 +37,9 @@ public class StockController {
 
     @Autowired
     private UserStockRelationService userStockRelationService;
+
+    @Autowired
+    private UserAlertService userAlertService;
 
     /**
      * 查出自选页面下用户所持股与推荐股
@@ -80,7 +84,7 @@ public class StockController {
      * @return
      */
     @RequestMapping("/deleteShares")
-    public R delete(@PathVariable("userId") int userId,@PathVariable("stockCode") String stockCode){
+    public R deleteShares(@PathVariable("userId") int userId,@PathVariable("stockCode") String stockCode){
         stockService.removeShares(stockCode,userId);
         return R.ok();
     }
@@ -94,5 +98,20 @@ public class StockController {
     public R viewUserByStock(@PathVariable("stockCode") String stockCode){
         List<UserEntity> userList = userStockRelationService.queryUserByStock(stockCode);
         return R.ok().put("userdata",userList);
+    }
+
+    /**
+     *
+     * @param userId
+     * @param stockCode
+     * @param alertType
+     * @param alertContent
+     * @param alertFrequency
+     * @return
+     */
+    @RequestMapping("/addAlert")
+    public R addAlert(@PathVariable("userId") int userId,@PathVariable("stockCode") String stockCode,@PathVariable("alertType") int alertType,@PathVariable("alertContent") String alertContent,@PathVariable("alertFrequency")int alertFrequency){
+        userAlertService.addAlert(userId,stockCode,alertType,alertContent,alertFrequency);
+        return R.ok();
     }
 }

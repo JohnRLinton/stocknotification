@@ -7,6 +7,7 @@ import com.stock.notification.dao.StockDao;
 import com.stock.notification.dao.StockTradingDao;
 import com.stock.notification.entity.StockEntity;
 import com.stock.notification.entity.StocktradingEntity;
+import com.stock.notification.entity.UserAlertEntity;
 import com.stock.notification.service.StockService;
 import com.stock.notification.service.StockTradingService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,12 +36,34 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
     private StringRedisTemplate redisTemplate;
 
 
+    public Map<String, List<StocktradingEntity>> getStockTradingJson() {
+        // 给缓存中放json字符串，拿出的json字符串，还用逆转为能用的对象类型（序列化与反序列化）
+        /**
+         * 1 空结果缓存，解决缓存穿透
+         * 2 设置过期时间（加随机值） ，解决缓存雪崩
+         * 3 加锁，解决缓存击穿
+         */
+        // 1 加入缓存逻辑，缓存中存的数据是json字符串
+        // JSON跨语言，跨平台兼容
+        String stockTradingJSON = redisTemplate.opsForValue().get("stockTradingJSON");
+        if (StringUtils.hasLength(stockTradingJSON)) {
+            // 2 缓存中没有，查询数据库
+            log.info("缓存不命中...将要查询数据库");
+            Map<String, List<StocktradingEntity>> stockTradingFromDb = getStockTradingJsonWithRedislock();
+            return stockTradingFromDb;
+        }
+        log.info("缓存命中...直接返回");
+        Map<String, List<StocktradingEntity>> result = JSON.parseObject(stockTradingJSON, new TypeReference<Map<String, List<StocktradingEntity>>>() {
+        });
+        return result;
+    }
+
+
     /**
-     * 从缓存中取
+     * 从数据库中取，并加分布式锁
      * @return
      */
-    @Override
-    public Map<String, List<StocktradingEntity>> getStockTradingJson() {
+    public Map<String, List<StocktradingEntity>> getStockTradingJsonWithRedislock() {
 
         // 采用Redisson分布式锁
         RLock lock = redisson.getLock("StockTrading-lock");

@@ -8,12 +8,12 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 用户所持股票信息
+ * 用户预警
  */
 
 @Data
-@TableName("userown")
-public class UserStockRelationEntity implements Serializable {
+@TableName("useralert")
+public class UserAlertEntity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -28,12 +28,17 @@ public class UserStockRelationEntity implements Serializable {
     private String stockCode;
 
     /**
-     * 是否所持股票
+     * 预警类型
      */
-    private Integer validStockCode;
+    private Integer alertType;
 
     /**
-     * 是否收藏股票
+     * 预警类容
      */
-    private Integer validCollectCode;
+    private String alertContent;
+
+    /**
+     * 预警频率
+     */
+    private Integer alertFrequency;
 }
