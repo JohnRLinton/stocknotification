@@ -89,6 +89,14 @@ public class StockController {
         return R.ok();
     }
 
+
+    @RequestMapping("/viewStockTrading")
+    public R viewStockTrading(@PathVariable("stockCode") String stockCode){
+        stockTradingService.getStockTradingJson(stockCode);
+        return R.ok();
+    }
+
+
     /**
      * 查看单个股票下所收藏的全部用户
      * @param stockCode

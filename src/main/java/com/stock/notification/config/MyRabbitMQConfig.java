@@ -21,40 +21,59 @@ public class MyRabbitMQConfig {
 
     /* 容器中的Queue、Exchange、Binding 会自动创建（在RabbitMQ）不存在的情况下 */
 
-    /**
-     * 死信队列
-     *
-     * @return
-     */@Bean
-    public Queue stockDelayQueue() {
-        /*
-            Queue(String name,  队列名字
-            boolean durable,  是否持久化
-            boolean exclusive,  是否排他
-            boolean autoDelete, 是否自动删除
-            Map<String, Object> arguments) 属性
-         */
-        HashMap<String, Object> arguments = new HashMap<>();
-        arguments.put("x-dead-letter-exchange", "stock-event-exchange");
-        arguments.put("x-dead-letter-routing-key", "stock.release.stock");
-        arguments.put("x-message-ttl", 60000); // 消息过期时间 1分钟
-        Queue queue = new Queue("stock.alert.queue", true, false, false, arguments);
-
-        return queue;
-    }
 
     /**
-     * 普通队列
+     * 股票价格上涨队列
      *
      * @return
      */
     @Bean
-    public Queue stockReleaseQueue() {
+    public Queue stockPriceRiseQueue() {
 
-        Queue queue = new Queue("stock.release.queue", true, false, false);
+        Queue queue = new Queue("stock.pricerise.queue", true, false, false);
 
         return queue;
     }
+
+    /**
+     * 股票价格涨超队列
+     *
+     * @return
+     */
+    @Bean
+    public Queue stockPriceRiseOverQueue() {
+
+        Queue queue = new Queue("stock.priceriseover.queue", true, false, false);
+
+        return queue;
+    }
+
+    /**
+     * 股票价格下跌队列
+     *
+     * @return
+     */
+    @Bean
+    public Queue stockPriceFallQueue() {
+
+        Queue queue = new Queue("stock.pricefall.queue", true, false, false);
+
+        return queue;
+    }
+
+    /**
+     * 股票价格跌超队列
+     *
+     * @return
+     */
+    @Bean
+    public Queue stockPriceFallOverQueue() {
+
+        Queue queue = new Queue("stock.pricefallover.queue", true, false, false);
+
+        return queue;
+    }
+
 
     /**
      * TopicExchange
@@ -75,7 +94,7 @@ public class MyRabbitMQConfig {
 
 
     @Bean
-    public Binding stockCreateBinding() {
+    public Binding stockRiseBinding() {
         /*
          * String destination, 目的地（队列名或者交换机名字）
          * DestinationType destinationType, 目的地类型（Queue、Exhcange）
@@ -83,20 +102,20 @@ public class MyRabbitMQConfig {
          * String routingKey,
          * Map<String, Object> arguments
          * */
-        return new Binding("stock.alert.queue",
+        return new Binding("stock.pricerise.queue",
                 Binding.DestinationType.QUEUE,
                 "stock-event-exchange",
-                "stock.create.stock",
+                "stock.price",
                 null);
     }
 
     @Bean
-    public Binding stockReleaseBinding() {
+    public Binding stockRiseOverBinding() {
 
-        return new Binding("stock.release.stock.queue",
+        return new Binding("stock.priceriseover.queue",
                 Binding.DestinationType.QUEUE,
                 "stock-event-exchange",
-                "stock.release.stock",
+                "stock.priceover",
                 null);
     }
 
@@ -105,35 +124,25 @@ public class MyRabbitMQConfig {
      * @return
      */
     @Bean
-    public Binding stockReleaseOtherBinding() {
+    public Binding stockFallBinding() {
 
-        return new Binding("stock.release.stock.queue",
+        return new Binding("stock.pricefall.queue",
                 Binding.DestinationType.QUEUE,
                 "stock-event-exchange",
-                "stock.release.other.#",
+                "stock.fall",
                 null);
     }
 
 
-    /**
-     *
-     * @return
-     */
     @Bean
-    public Queue stockSecKillOrrderQueue() {
-        Queue queue = new Queue("stock.xxx.queue", true, false, false);
-        return queue;
-    }
-
-    @Bean
-    public Binding stockSecKillOrrderQueueBinding() {
+    public Binding stockFallOverBinding() {
         //String destination, DestinationType destinationType, String exchange, String routingKey,
         // 			Map<String, Object> arguments
         Binding binding = new Binding(
-                "stock.seckill.stock.queue",
+                "stock.pricefallover.queue",
                 Binding.DestinationType.QUEUE,
                 "stock-event-exchange",
-                "stock.seckill.stock",
+                "stock.fallover",
                 null);
 
         return binding;

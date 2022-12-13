@@ -17,18 +17,21 @@ import java.io.IOException;
  * @email 772767100@qq.com
  */
 
-@RabbitListener(queues = "stock.price.queue")
+@RabbitListener(queues = "stock.priceriseover.queue")
 @Service
 @Slf4j
-public class StockPriceListener {
+public class StockPriceRiseOverListener {
 
 
+    @Autowired
+    UserAlertService userAlertService;
 
     @RabbitHandler
     public void listener(StockEntity stockEntity, Channel channel, Message message) throws IOException {
-        log.info("收到股票价格变动，准备通知用户" + stockEntity.getStockCode());
+        log.info("收到股票价格涨超，准备通知用户" + stockEntity.getStockCode());
         try {
-            //TODO:编写逻辑方法
+            //通知用户股票涨超
+            userAlertService.notifyRiseOver(stockEntity);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
         } catch (Exception e) {
             channel.basicReject(message.getMessageProperties().getDeliveryTag(),true);
@@ -36,3 +39,4 @@ public class StockPriceListener {
 
     }
 }
+

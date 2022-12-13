@@ -41,6 +41,7 @@ public class StockServiceImpl extends ServiceImpl<StockDao, StockEntity> impleme
         //推荐股
         Map<String,List<StockEntity>> map=null;
 
+        StockVo stockVo = new StockVo();
         //1、获取推荐股票 stockinfo
         CompletableFuture<Void> recommendFuture = CompletableFuture.runAsync(() -> {
             List<StockEntity> recommendList= this.baseMapper.selectList(new QueryWrapper<StockEntity>());
@@ -56,6 +57,7 @@ public class StockServiceImpl extends ServiceImpl<StockDao, StockEntity> impleme
         try {
             CompletableFuture.allOf(recommendFuture,selectFuture).get();
         } catch (InterruptedException e) {
+            log.info("异步编排出现中断异常："+e);
             e.printStackTrace();
         } catch (ExecutionException e) {
             e.printStackTrace();

@@ -5,15 +5,15 @@ import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.stock.notification.dao.UserAlertDao;
+import com.stock.notification.entity.StockEntity;
 import com.stock.notification.entity.StocktradingEntity;
 import com.stock.notification.entity.UserAlertEntity;
-import com.stock.notification.entity.UserStockRelationEntity;
 import com.stock.notification.service.UserAlertService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
+import org.redisson.api.RReadWriteLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -35,7 +35,7 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
     private StringRedisTemplate redisTemplate;
 
     @Autowired
-    RedissonClient redisson;
+    RedissonClient redissonClient;
 
     /**
      * 添加用户自定义预警入库
@@ -56,14 +56,35 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
         userAlertDao.insert(userAlertEntity);
     }
 
+    @Override
+    public void notifyFallOver(StockEntity stockEntity) {
+        //TODO:从缓存里去数据，进行比对
+    }
+
+    @Override
+    public void notifyFall(StockEntity stockEntity) {
+
+    }
+
+    @Override
+    public void notifyRise(StockEntity stockEntity) {
+
+    }
+
+    @Override
+    public void notifyRiseOver(StockEntity stockEntity) {
+
+    }
+
 
     /**
-     * 存入缓存，并zset存取预警
+     * 存入缓存，并zset score存取预警预期数值
      * @return
      */
     public Map<String, List<UserAlertEntity>> getUserAlertJson(int userId,String stockCode) {
         // 给缓存中放json字符串，拿出的json字符串，还用逆转为能用的对象类型（序列化与反序列化）
         //TODO:zset
+        //zset(stockcode,userId,amount);
         String alertJSON = redisTemplate.opsForValue().get("userAlertJSON");
         if (StringUtils.hasLength(alertJSON)) {
             // 2 缓存中没有，查询数据库
@@ -84,16 +105,17 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
      */
     public Map<String, List<UserAlertEntity>> getAlertJsonFromDbWithRedislock(int userId,String stockCode) {
 
-        // 采用Redisson分布式锁
-        RLock lock = redisson.getLock("userAlert-lock");
-        lock.lock();
-        Map<String, List<UserAlertEntity>> dataFromDB;
+        RReadWriteLock readWriteLock = redissonClient.getReadWriteLock("UserAlertJSON-lock");
+        RLock rLock = readWriteLock.readLock();
+        Map<String, List<UserAlertEntity>> dataFromDB=null;
         try {
+            rLock.lock();
             //从数据库中访问数据
             dataFromDB = getDataFromDB(userId,stockCode);
+
         }
         finally {
-            lock.unlock();
+            rLock.unlock();
         }
         return dataFromDB;
 
@@ -104,7 +126,7 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
      * @return
      */
     private Map<String, List<UserAlertEntity>> getDataFromDB(int userId,String stockCode) {
-        String userAlertJSON = redisTemplate.opsForValue().get("alertJSON");
+        String userAlertJSON = redisTemplate.opsForValue().get("UserAlertJSON");
         if (!StringUtils.hasLength(userAlertJSON)) {
             // 缓存不为null直接返回
             Map<String, List<UserAlertEntity>> result = JSON.parseObject(userAlertJSON, new TypeReference<Map<String, List<UserAlertEntity>>>() {
@@ -128,7 +150,7 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
 
         // 3 查到的数据放入缓存，将对象转为json放在缓存中
         String s = JSON.toJSONString(stockTradingMap);
-        redisTemplate.opsForValue().set("alertJSON", s, 1, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set("UserAlertJSON", s, 1, TimeUnit.DAYS);
         return stockTradingMap;
     }
 

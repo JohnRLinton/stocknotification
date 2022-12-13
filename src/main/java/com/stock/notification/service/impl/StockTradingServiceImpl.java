@@ -12,6 +12,7 @@ import com.stock.notification.service.StockService;
 import com.stock.notification.service.StockTradingService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
+import org.redisson.api.RReadWriteLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -30,13 +31,15 @@ import java.util.stream.Collectors;
 public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, StocktradingEntity> implements StockTradingService {
 
     @Autowired
-    RedissonClient redisson;
+    private RedissonClient redissonClient;
 
     @Resource
     private StringRedisTemplate redisTemplate;
 
 
-    public Map<String, List<StocktradingEntity>> getStockTradingJson() {
+
+
+    public Map<String, List<StocktradingEntity>> getStockTradingJson(String stockcode) {
         // 给缓存中放json字符串，拿出的json字符串，还用逆转为能用的对象类型（序列化与反序列化）
         /**
          * 1 空结果缓存，解决缓存穿透
@@ -49,7 +52,7 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
         if (StringUtils.hasLength(stockTradingJSON)) {
             // 2 缓存中没有，查询数据库
             log.info("缓存不命中...将要查询数据库");
-            Map<String, List<StocktradingEntity>> stockTradingFromDb = getStockTradingJsonWithRedislock();
+            Map<String, List<StocktradingEntity>> stockTradingFromDb = getStockTradingJsonWithRedislock(stockcode);
             return stockTradingFromDb;
         }
         log.info("缓存命中...直接返回");
@@ -60,22 +63,25 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
 
 
     /**
-     * 从数据库中取，并加分布式锁
+     * 加分布式锁
      * @return
      */
-    public Map<String, List<StocktradingEntity>> getStockTradingJsonWithRedislock() {
+    public Map<String, List<StocktradingEntity>> getStockTradingJsonWithRedislock(String stockcode) {
 
-        // 采用Redisson分布式锁
-        RLock lock = redisson.getLock("StockTrading-lock");
-        lock.lock();
-        Map<String, List<StocktradingEntity>> dataFromDB;
+        //1、占分布式锁。去redis占坑
+        //（锁的粒度，越细越快:具体缓存的是某个数据）
+        //创建读锁
+        RReadWriteLock readWriteLock = redissonClient.getReadWriteLock("StockTradingJSON-lock");
+        RLock rLock = readWriteLock.readLock();
+        Map<String, List<StocktradingEntity>> dataFromDB=null;
         try {
+            rLock.lock();
             //从数据库中访问数据
-            dataFromDB = getDataFromDB();
+            dataFromDB = getDataFromDB(stockcode);
 
         }
         finally {
-            lock.unlock();
+            rLock.unlock();
         }
         return dataFromDB;
 
@@ -85,7 +91,7 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
      * 从数据库中取
      * @return
      */
-    private Map<String, List<StocktradingEntity>> getDataFromDB() {
+    private Map<String, List<StocktradingEntity>> getDataFromDB(String stockcode) {
         String stockTradingJSON = redisTemplate.opsForValue().get("stockTradingJSON");
         if (!StringUtils.hasLength(stockTradingJSON)) {
             // 缓存不为null直接返回
@@ -98,11 +104,10 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
         List<StocktradingEntity> selectList =baseMapper.selectList(null);
         log.info(String.valueOf(selectList));
         // 查询股票代码额外信息
-        List<StocktradingEntity> level1stock = getStock_code(selectList, null);
+        List<StocktradingEntity> level1stock = getStock_code(selectList, stockcode);
 
         // 2 封装数据
         Map<String, List<StocktradingEntity>> stockTradingMap = level1stock.stream().collect(Collectors.toMap(k -> k.getStockCode().toString(), v -> {
-                    // 1 每一个的一级分类，查到这个一级分类的二级分类
                     return level1stock;
                 }
 
