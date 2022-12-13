@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @Data
 public class StockVo {
 
-    private String stockName;
+
 
     private String stockCode;
 
@@ -22,7 +22,7 @@ public class StockVo {
      */
     private BigDecimal latestPrice;
 
-    private String areaCode;
+
 
     /**
      * 涨跌幅

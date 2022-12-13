@@ -3,6 +3,7 @@ package com.stock.notification.controller;
 
 //import com.baomidou.mybatisplus.extension.api.R;
 import com.stock.notification.entity.StockEntity;
+import com.stock.notification.entity.StocktradingEntity;
 import com.stock.notification.entity.UserEntity;
 import com.stock.notification.service.StockService;
 import com.stock.notification.service.StockTradingService;
@@ -90,10 +91,16 @@ public class StockController {
     }
 
 
+    /**
+     * 查看股票交易信息
+     * @param stockCode
+     * @return
+     */
     @RequestMapping("/viewStockTrading")
     public R viewStockTrading(@PathVariable("stockCode") String stockCode){
-        stockTradingService.getStockTradingJson(stockCode);
-        return R.ok();
+        Map<String, StocktradingEntity> stocktradingEntityMap=stockTradingService.getStockTradingJson(stockCode);
+        StocktradingEntity stocktradingEntity = stocktradingEntityMap.get(stockCode);
+        return R.ok().put("StocktradingData",stocktradingEntity);
     }
 
 

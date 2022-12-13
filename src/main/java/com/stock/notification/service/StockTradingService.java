@@ -6,5 +6,5 @@ import java.util.List;
 import java.util.Map;
 
 public interface StockTradingService {
-    Map<String, List<StocktradingEntity>> getStockTradingJson(String stockcode);
+    Map<String, StocktradingEntity> getStockTradingJson(String stockcode);
 }
