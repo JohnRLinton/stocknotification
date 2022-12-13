@@ -86,6 +86,7 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
         //TODO:zset
         //zset(stockcode,userId,amount);
         String alertJSON = redisTemplate.opsForValue().get("userAlertJSON");
+
         if (StringUtils.hasLength(alertJSON)) {
             // 2 缓存中没有，查询数据库
             log.info("缓存不命中...将要查询数据库");

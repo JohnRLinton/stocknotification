@@ -136,12 +136,12 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
 
     /**
      * 监控股票变动信息
-     * @param stockcCode
+     * @param stockCode
      */
-    public void stockChange(String stockcCode){
+    public void stockChange(String stockCode){
         StockVo stockVo = new StockVo();
-        Map<String, StocktradingEntity> concurrntStock = getStockTradingJson(stockcCode);
-         StocktradingEntity stocktradingEntity = concurrntStock.get(stockcCode);
+        Map<String, StocktradingEntity> concurrntStock = getStockTradingJson(stockCode);
+         StocktradingEntity stocktradingEntity = concurrntStock.get(stockCode);
          //最新价格
          BigDecimal latestPrice= stocktradingEntity.getLatestPrice();
          //今开
@@ -151,7 +151,7 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
          //涨跌幅
          BigDecimal changePercent=pre.divide(latestPrice.subtract(pre),3,BigDecimal.ROUND_HALF_UP);
          stockVo.setLatestPrice(latestPrice);
-         stockVo.setStockCode(stockcCode);
+         stockVo.setStockCode(stockCode);
          stockVo.setStockChange(changePercent);
          if (changePercent.compareTo(new BigDecimal(0))>0){
              rabbitTemplate.convertAndSend("stock-event-exchange","stock.pricerise",stockVo);
