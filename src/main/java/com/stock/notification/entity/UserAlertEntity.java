@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * 用户预警
@@ -35,7 +36,7 @@ public class UserAlertEntity implements Serializable {
     /**
      * 预警类容
      */
-    private String alertContent;
+    private BigDecimal alertContent;
 
     /**
      * 预警频率

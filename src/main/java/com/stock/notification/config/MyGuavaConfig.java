@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -75,19 +76,24 @@ public class MyGuavaConfig {
                                 log.info(notification.getKey() + " was removed, cause is " + notification.getCause());
                             }
                         }
-                ).build(new StockLoader());
+                ).build(new CacheLoader<String, List<StockEntity>>() {
+                    @Override
+                    public List<StockEntity> load(String s) throws Exception {
+                        return null;
+                    }
+                });
 
     }
 
-    public class StockLoader extends CacheLoader<String,List<StockEntity>>{
-        @Override
-        public List<StockEntity> load(String key) {
-            log.info("加载股票信息开始");
-            List<StockEntity> list=stockService.queryStock();
-            log.info("list:{}",list.size());
-            log.info("加载股票信息结束");
-            return list;
-        }
-
-    }
+//    public class StockLoader extends CacheLoader<String,List<StockEntity>>{
+//        @Override
+//        public Map<String,List<StockEntity>> load(String key) {
+//            log.info("加载股票信息开始");
+//            Map<String,List<StockEntity>> list=stockService.queryStock();
+//            log.info("list:{}",list.size());
+//            log.info("加载股票信息结束");
+//            return list;
+//        }
+//
+//    }
 }

@@ -24,6 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +45,39 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
+
+
+    /**
+     * @CacheEvict:失效模式
+     *      * @CachePut:双写模式，需要有返回值
+     *      * 1、同时进行多种缓存操作：@Caching
+     *      * 2、指定删除某个分区下的所有数据 @CacheEvict(value = "stockTrading",allEntries = true)
+     *      * 3、存储同一类型的数据，都可以指定为同一分区
+     * @param stocktradingEntity
+     */
+    @CacheEvict(value = "stockTrading",allEntries = true)       //删除某个分区下的所有数据
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateStockTrading(StocktradingEntity stocktradingEntity) {
+
+        RReadWriteLock readWriteLock = redissonClient.getReadWriteLock("StockTradingJSON-lock");
+        //创建写锁
+        RLock rLock = readWriteLock.writeLock();
+        try {
+            rLock.lock();
+            this.baseMapper.updateById(stocktradingEntity);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            rLock.unlock();
+        }
+
+        //同时修改缓存中的数据
+        //删除缓存,等待下一次主动查询进行更新
+//        redisTemplate.delete("StockTradingJSON-lock");
+    }
+
+
 
     @Override
     public Map<String, StocktradingEntity> getStockTradingJson(String stockcode) {

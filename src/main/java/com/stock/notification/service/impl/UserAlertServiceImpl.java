@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +47,7 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
      * @param alertFrequency
      */
     @Override
-    public void addAlert(int userId, String stockCode, int alertType, String alertContent, int alertFrequency) {
+    public void addAlert(int userId, String stockCode, int alertType, BigDecimal alertContent, int alertFrequency) {
         UserAlertEntity userAlertEntity = new UserAlertEntity();
         userAlertEntity.setStockCode(stockCode);
         userAlertEntity.setUserId(userId);

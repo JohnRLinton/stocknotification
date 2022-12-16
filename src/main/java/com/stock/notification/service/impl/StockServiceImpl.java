@@ -35,8 +35,8 @@ public class StockServiceImpl extends ServiceImpl<StockDao, StockEntity> impleme
     private UserStockRelationService userStockRelationService;
 
 
+    @Cacheable(value = "stock",key = "#root.methodName")
     @Override
-    @Cacheable(value = "stockCache",key = "#stock")
     public Map<String,List<StockEntity>> queryStock(int userId) {
         //推荐股
         Map<String,List<StockEntity>> map=null;
