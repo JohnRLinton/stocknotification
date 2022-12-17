@@ -1,6 +1,7 @@
 package com.stock.notification.service;
 
 import com.stock.notification.entity.StocktradingEntity;
+import com.stock.notification.vo.StockVo;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,4 +14,6 @@ public interface StockTradingService {
     void updateStockTrading(StocktradingEntity stocktradingEntity);
 
     Map<String, StocktradingEntity> getStockTradingJson(String stockcode);
+
+    StockVo monitorStockChange(String stockCode);
 }

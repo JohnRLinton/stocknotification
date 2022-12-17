@@ -72,9 +72,6 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
             rLock.unlock();
         }
 
-        //同时修改缓存中的数据
-        //删除缓存,等待下一次主动查询进行更新
-//        redisTemplate.delete("StockTradingJSON-lock");
     }
 
 
@@ -174,7 +171,8 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
      * 监控股票变动信息
      * @param stockCode
      */
-    public void stockChange(String stockCode){
+    @Override
+    public StockVo monitorStockChange(String stockCode){
         StockVo stockVo = new StockVo();
         Map<String, StocktradingEntity> concurrntStock = getStockTradingJson(stockCode);
          StocktradingEntity stocktradingEntity = concurrntStock.get(stockCode);
@@ -189,6 +187,7 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
          stockVo.setLatestPrice(latestPrice);
          stockVo.setStockCode(stockCode);
          stockVo.setStockChange(changePercent);
+         stockVo.setPre(pre);
          if (changePercent.compareTo(new BigDecimal(0))>0){
              rabbitTemplate.convertAndSend("stock-event-exchange","stock.pricerise",stockVo);
              rabbitTemplate.convertAndSend("stock-event-exchange","stock.priceriseover",stockVo);
@@ -196,5 +195,6 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
              rabbitTemplate.convertAndSend("stock-event-exchange","stock.pricefall",stockVo);
              rabbitTemplate.convertAndSend("stock-event-exchange","stock.pricefallover",stockVo);
          }
+         return stockVo;
     }
 }

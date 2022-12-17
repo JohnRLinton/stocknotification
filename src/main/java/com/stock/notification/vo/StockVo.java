@@ -22,6 +22,7 @@ public class StockVo {
      */
     private BigDecimal latestPrice;
 
+    private BigDecimal pre;
 
 
     /**

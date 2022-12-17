@@ -9,10 +9,13 @@ import com.stock.notification.service.StockService;
 import com.stock.notification.service.StockTradingService;
 import com.stock.notification.service.UserAlertService;
 import com.stock.notification.service.UserStockRelationService;
+import com.stock.notification.vo.StockVo;
+import com.stock.notification.vo.UserAlertVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.stock.notification.utils.R;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -125,8 +128,15 @@ public class StockController {
      * @return
      */
     @RequestMapping("/addAlert")
-    public R addAlert(@PathVariable("userId") int userId,@PathVariable("stockCode") String stockCode,@PathVariable("alertType") int alertType,@PathVariable("alertContent") String alertContent,@PathVariable("alertFrequency")int alertFrequency){
+    public R addAlert(@PathVariable("userId") int userId, @PathVariable("stockCode") String stockCode, @PathVariable("alertType") int alertType, @PathVariable("alertContent") BigDecimal alertContent, @PathVariable("alertFrequency")int alertFrequency){
         userAlertService.addAlert(userId,stockCode,alertType,alertContent,alertFrequency);
-        return R.ok();
+        StockVo stockVo = stockTradingService.monitorStockChange(stockCode);
+        UserAlertVo userAlertVo=userAlertService.notifyUser(stockVo);
+        return R.ok().put("userAlertData",userAlertVo);
     }
+
+//    @RequestMapping("/notifyUser")
+//    public R notifyUser(){
+//
+//    }
 }

@@ -1,6 +1,7 @@
 package com.stock.notification.listener;
 
 
+import com.stock.notification.vo.StockVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
@@ -19,8 +20,8 @@ import java.io.IOException;
 @Slf4j
 public class StockTransactionListener {
     @RabbitHandler
-    public void listener(StockEntity stockEntity, Channel channel, Message message) throws IOException {
-        log.info("收到股票交易信息变动，准备通知用户" + stockEntity.getStockCode());
+    public void listener(StockVo stockVo, Channel channel, Message message) throws IOException {
+        log.info("收到股票交易信息变动，准备通知用户" + stockVo.getStockCode());
         try {
             //TODO:编写逻辑方法
             channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
