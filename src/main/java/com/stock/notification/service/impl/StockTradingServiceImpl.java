@@ -178,8 +178,6 @@ public class StockTradingServiceImpl extends ServiceImpl<StockTradingDao, Stockt
          StocktradingEntity stocktradingEntity = concurrntStock.get(stockCode);
          //最新价格
          BigDecimal latestPrice= stocktradingEntity.getLatestPrice();
-         //今开
-         BigDecimal todayPrice=stocktradingEntity.getTodayPrice();
          //昨收
          BigDecimal pre=stocktradingEntity.getPre();
          //涨跌幅

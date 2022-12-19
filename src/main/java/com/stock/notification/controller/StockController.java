@@ -135,8 +135,4 @@ public class StockController {
         return R.ok().put("userAlertData",userAlertVo);
     }
 
-//    @RequestMapping("/notifyUser")
-//    public R notifyUser(){
-//
-//    }
 }

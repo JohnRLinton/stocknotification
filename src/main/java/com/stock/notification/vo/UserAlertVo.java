@@ -10,13 +10,18 @@ import java.util.Set;
 public class UserAlertVo {
     private String stockCode;
 
-    private Set<String> userSet;
+    private int userId;
 
     private BigDecimal stockChange;
 
     private BigDecimal latestPrice;
 
     private BigDecimal userExpect;
+
+    /**
+     *股票变动差价
+     */
+    private BigDecimal difference;
 
     private Integer alertFrequency;
 }

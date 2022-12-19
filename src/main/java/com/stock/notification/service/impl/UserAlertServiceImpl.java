@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEntity> implements UserAlertService {
 
+    public static ThreadLocal<UserAlertEntity> alertUser = new ThreadLocal<>();
+
     @Resource
     private UserAlertDao userAlertDao;
 
@@ -59,32 +61,45 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
         userAlertEntity.setAlertType(alertType);
         userAlertEntity.setAlertContent(alertContent);
         userAlertEntity.setAlertFrequency(alertFrequency);
+        alertUser.set(userAlertEntity);
         userAlertDao.insert(userAlertEntity);
     }
+
 
     @Override
     public UserAlertVo notifyUser(StockVo stockVo) {
         String stockCode=stockVo.getStockCode();
         float latestPrice=stockVo.getLatestPrice().floatValue();
 
-        //获取到该股票的用户预警信息
-        UserAlertEntity userAlertEntity=getUserAlertJson(stockCode).get(stockCode);
+        //获取到当前用户预警信息
+        UserAlertEntity userAlertEntity = alertUser.get();
         int userId=userAlertEntity.getUserId();
         int alertType=userAlertEntity.getAlertType();
         int alertFrequency = userAlertEntity.getAlertFrequency();
+        BigDecimal alertContent = userAlertEntity.getAlertContent();
+
+        //计算与用户预期的涨跌差值
+        BigDecimal difference=alertContent.subtract(stockVo.getLatestPrice());
 
         //获取到该股票，该预警类型一致的用户列表
         Set<String> userSet=getUserAlertSet(userId,stockCode,alertType,latestPrice);
 
-
         //通知用户信息 数据封装
         UserAlertVo userAlertVo=new UserAlertVo();
-        userAlertVo.setUserSet(userSet);
-        userAlertVo.setStockCode(stockCode);
-        userAlertVo.setLatestPrice(stockVo.getLatestPrice());
-        userAlertVo.setStockChange(stockVo.getStockChange());
-        userAlertVo.setUserExpect(userAlertEntity.getAlertContent());
-        userAlertVo.setAlertFrequency(alertFrequency);
+
+        //遍历循环用户列表，找到当前一致的用户，返回变动结果
+        for(String id:userSet){
+            if (Integer.valueOf(id)==userId){
+                userAlertVo.setUserId(userId);
+                userAlertVo.setStockCode(stockCode);
+                userAlertVo.setLatestPrice(stockVo.getLatestPrice());
+                userAlertVo.setStockChange(stockVo.getStockChange());
+                userAlertVo.setUserExpect(alertContent);
+                userAlertVo.setDifference(difference);
+                userAlertVo.setAlertFrequency(alertFrequency);
+            }
+        }
+
         return userAlertVo;
     }
 
@@ -121,16 +136,16 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
     /**
      * 股票与用户预警信息同时也存入缓存
      */
-    public Map<String, UserAlertEntity> getUserAlertJson(String stockcode) {
+    public Map<String, List<UserAlertEntity>> getUserAlertJson(String stockcode) {
         String stockTradingJSON = redisTemplate.opsForValue().get("userAlertJSON");
         if (!StringUtils.hasLength(stockTradingJSON)) {
             // 2 缓存中没有，查询数据库
             log.info("缓存不命中...将要查询数据库");
-            Map<String, UserAlertEntity> stockTradingFromDb = getUserAlertJsonWithRedislock(stockcode);
+            Map<String, List<UserAlertEntity>> stockTradingFromDb = getUserAlertJsonWithRedislock(stockcode);
             return stockTradingFromDb;
         }
         log.info("缓存命中...直接返回");
-        Map<String, UserAlertEntity> result = JSON.parseObject(stockTradingJSON, new TypeReference<Map<String, UserAlertEntity>>() {
+        Map<String, List<UserAlertEntity>> result = JSON.parseObject(stockTradingJSON, new TypeReference<Map<String, List<UserAlertEntity>>>() {
         });
 
         return result;
@@ -163,14 +178,14 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
      * 加分布式锁
      * @return
      */
-    public Map<String, UserAlertEntity> getUserAlertJsonWithRedislock(String stockcode) {
+    public Map<String, List<UserAlertEntity>> getUserAlertJsonWithRedislock(String stockcode) {
 
         //1、占分布式锁。去redis占坑
         //（锁的粒度，越细越快:具体缓存的是某个数据）
         //创建读锁
         RReadWriteLock readWriteLock = redissonClient.getReadWriteLock("UserAlertJSON-lock");
         RLock rLock = readWriteLock.readLock();
-        Map<String, UserAlertEntity> dataFromDB=null;
+        Map<String, List<UserAlertEntity>> dataFromDB=null;
         try {
             rLock.lock();
             //从数据库中访问数据
@@ -216,21 +231,21 @@ public class UserAlertServiceImpl extends ServiceImpl<UserAlertDao, UserAlertEnt
      * 从数据库中取
      * @return
      */
-    private Map<String, UserAlertEntity> getJSONDataFromDB(String stockcode) {
+    private Map<String, List<UserAlertEntity>> getJSONDataFromDB(String stockcode) {
         String stockTradingJSON = redisTemplate.opsForValue().get("stockTradingJSON");
         if (!StringUtils.hasLength(stockTradingJSON)) {
             // 缓存不为null直接返回
-            Map<String, UserAlertEntity> result = JSON.parseObject(stockTradingJSON, new TypeReference<Map<String, UserAlertEntity>>() {
+            Map<String, List<UserAlertEntity>> result = JSON.parseObject(stockTradingJSON, new TypeReference<Map<String, List<UserAlertEntity>>>() {
             });
             return result;
         }
         log.info("查询了数据库......");
 
-        UserAlertEntity userAlertEntity =baseMapper.selectOne(new QueryWrapper<UserAlertEntity>().eq("stockcode",stockcode));
-        log.info(String.valueOf(userAlertEntity));
+        List<UserAlertEntity> userAlertList =baseMapper.selectList(new QueryWrapper<UserAlertEntity>().eq("stockcode",stockcode));
+        log.info(String.valueOf(userAlertList));
 
-        Map<String, UserAlertEntity> userAlertMap =null;
-        userAlertMap.put(stockcode,userAlertEntity);
+        Map<String, List<UserAlertEntity>> userAlertMap =null;
+        userAlertMap.put(stockcode,userAlertList);
 
         // 3 查到的数据放入缓存，将对象转为json放在缓存中
         String s = JSON.toJSONString(userAlertMap);
